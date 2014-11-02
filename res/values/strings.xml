@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">MainActivity</string>
+    <string name="app_name">OmegaPlot</string>
+    <string name="welcome_message">Welcome to OmegaPlot! (2)</string>
+    <string name="edit_message">Type stuff here!</string>
+    <string name="button_send">Send</string>
+    <string name="title_activity_main">OmegaPlotTitle</string>
+    <string name="title_activity_display_message">My Message Display</string>
 </resources>
