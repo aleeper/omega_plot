@@ -28,8 +28,6 @@ import com.androidplot.xy.XYSeries;
 import com.androidplot.xy.*;
 import java.util.Arrays;
 
-
-
 import java.lang.Override;
 
 public class MainActivity extends Activity implements SensorEventListener {
