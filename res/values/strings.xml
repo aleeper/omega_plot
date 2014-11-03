@@ -6,4 +6,7 @@
     <string name="button_send">Send</string>
     <string name="title_activity_main">OmegaPlotTitle</string>
     <string name="title_activity_display_message">My Message Display</string>
+    <string name="action_search">My Search Action</string>
+    <string name="action_record">Record</string>
+    <string name="action_settings">My Settings Action</string>
 </resources>
