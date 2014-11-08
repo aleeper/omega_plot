@@ -138,11 +138,11 @@ public class GyroPlotActivity extends Activity implements SensorEventListener
         rollHistorySeries = new SimpleXYSeries("w_z");
         rollHistorySeries.useImplicitXVals();
 
-        aprHistoryPlot.setRangeBoundaries(-30, 30, BoundaryMode.FIXED);
+        aprHistoryPlot.setRangeBoundaries(-40, 40, BoundaryMode.FIXED);
         aprHistoryPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
-        aprHistoryPlot.addSeries(azimuthHistorySeries, new LineAndPointFormatter(Color.rgb(100, 100, 200), null, null, null));
+        aprHistoryPlot.addSeries(azimuthHistorySeries, new LineAndPointFormatter(Color.rgb(200, 100, 100), null, null, null));
         aprHistoryPlot.addSeries(pitchHistorySeries, new LineAndPointFormatter(Color.rgb(100, 200, 100), null, null, null));
-        aprHistoryPlot.addSeries(rollHistorySeries, new LineAndPointFormatter(Color.rgb(200, 100, 100), null, null, null));
+        aprHistoryPlot.addSeries(rollHistorySeries, new LineAndPointFormatter(Color.rgb(100, 100, 200), null, null, null));
         aprHistoryPlot.setDomainStepValue(5);
         aprHistoryPlot.setTicksPerRangeLabel(3);
         aprHistoryPlot.setDomainLabel("Sample Index");
@@ -268,8 +268,8 @@ public class GyroPlotActivity extends Activity implements SensorEventListener
             }
 
             // add the latest history sample:
-            azimuthHistorySeries.addLast(null, sensorEvent.values[0]);
-            pitchHistorySeries.addLast(null, sensorEvent.values[1]);
+            azimuthHistorySeries.addLast(null, -sensorEvent.values[1]);
+            pitchHistorySeries.addLast(null, sensorEvent.values[0]);
             rollHistorySeries.addLast(null, sensorEvent.values[2]);
 
             // redraw the Plots:
