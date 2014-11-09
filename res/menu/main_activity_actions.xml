@@ -8,7 +8,7 @@
         android:icon="@drawable/ic_action_play"
         android:title="@string/action_record"
         android:showAsAction="ifRoom" />
-    <!-- Settings, should always be in the overflow -->
+    <!--Settings, should always be in the overflow-->
     <!--<item android:id="@+id/action_settings"-->
         <!--android:title="@string/action_settings"-->
         <!--android:showAsAction="never" />-->

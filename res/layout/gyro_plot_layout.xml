@@ -1,23 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <!--<com.androidplot.xy.XYPlot-->
-        <!--android:id="@+id/aprLevelsPlot"-->
-        <!--android:layout_width="fill_parent"-->
-        <!--android:layout_height="fill_parent"-->
-        <!--android:layout_weight="1"-->
-        <!--android:layout_marginTop="10px"-->
-        <!--android:layout_marginLeft="10px"-->
-        <!--android:layout_marginRight="10px"-->
-        <!--title="A/P/R Levels"-->
-        <!--/>-->
     <com.androidplot.xy.XYPlot
         android:id="@+id/mainPlot"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
         android:layout_weight="1"
         android:layout_marginTop="0px"
         android:layout_marginBottom="0px"
@@ -25,12 +15,19 @@
         android:layout_marginRight="0px"
         />
 
-    <!--<Button-->
-        <!--android:id="@+id/myButton"-->
-        <!--android:layout_height="wrap_content"-->
+    <!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+        <!--android:orientation="vertical"-->
         <!--android:layout_width="wrap_content"-->
-        <!--android:text="My Button!"-->
-        <!--/>-->
+        <!--android:layout_height="match_parent">-->
+        <!--<Button-->
+            <!--android:id="@+id/myButton"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:text="My Button!"-->
+            <!--/>-->
+
+    <!--</LinearLayout>-->
+
 
     <!--<LinearLayout android:orientation="horizontal"-->
         <!--android:gravity="center"-->

@@ -66,6 +66,11 @@ public class GyroPlotActivity extends Activity implements SensorEventListener
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Make fullscreen with a title bar.
+        // To remove title bar:
+        //   * Put in manifest: android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+        //   * Or do: requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.gyro_plot_layout);
@@ -98,12 +103,12 @@ public class GyroPlotActivity extends Activity implements SensorEventListener
 
         // Style the legend.
         mainPlot.getLegendWidget().position(0, XLayoutStyle.ABSOLUTE_FROM_RIGHT,
-                                            0, YLayoutStyle.ABSOLUTE_FROM_TOP,
-                                            AnchorPosition.RIGHT_TOP);
+                                            0, YLayoutStyle.ABSOLUTE_FROM_BOTTOM,
+                                            AnchorPosition.RIGHT_BOTTOM);
         mainPlot.getLegendWidget().setWidth(125, SizeLayoutType.ABSOLUTE);
 
         // Style the title.
-        mainPlot.setTitle("Angular Velocity in Body-Fixed Axes");
+        mainPlot.setTitle("Angular Velocity about Body-Fixed Axes");
         mainPlot.setPlotPaddingTop(10);
         // Style the border.
         //mainPlot.setBorderStyle(XYPlot.BorderStyle.ROUNDED, 10.0f, 10.0f);
@@ -112,7 +117,7 @@ public class GyroPlotActivity extends Activity implements SensorEventListener
         //mainPlot.setBackgroundColor(Color.WHITE);
 
         // Set horizontal label.
-        mainPlot.setDomainLabel("Gyro Sample Index");
+        mainPlot.setDomainLabel("Gyro Sample Index (100 samples/s)");
         mainPlot.getDomainLabelWidget().position(0, XLayoutStyle.ABSOLUTE_FROM_CENTER,
                                                  0, YLayoutStyle.ABSOLUTE_FROM_BOTTOM,
                                                  AnchorPosition.BOTTOM_MIDDLE);
