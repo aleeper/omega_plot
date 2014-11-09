@@ -19,6 +19,7 @@ package com.adamleeper.omegaplot;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -28,181 +29,123 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MenuInflater;
-import android.view.View;
+import android.view.WindowManager;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 
 import com.androidplot.util.PlotStatistics;
+import com.androidplot.ui.AnchorPosition;
+import com.androidplot.ui.SizeLayoutType;
+import com.androidplot.ui.SizeMetrics;
+import com.androidplot.ui.XLayoutStyle;
+import com.androidplot.ui.YLayoutStyle;
 import com.androidplot.xy.*;
 import com.androidplot.xy.LineAndPointFormatter;
+import com.androidplot.xy.XYStepMode;
+import com.androidplot.xy.XYPlot;
 
-
-import java.text.FieldPosition;
-import java.text.Format;
-import java.text.ParsePosition;
-import java.util.Arrays;
-
-// Monitor the phone's orientation sensor and plot the resulting azimuth pitch and roll values.
-// See: http://developer.android.com/reference/android/hardware/SensorEvent.html
+// Monitor the device's gyroscope and plot the w_x, w_y, w_z values.
 public class GyroPlotActivity extends Activity implements SensorEventListener
 {
     private static String TAG = GyroPlotActivity.class.getSimpleName();
 
     private boolean mIsRecording = true;
 
-    /**
-     * A simple formatter to convert bar indexes into sensor names.
-     */
-    private class APRIndexFormat extends Format {
-        @Override
-        public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
-            Number num = (Number) obj;
-
-            // using num.intValue() will floor the value, so we add 0.5 to round instead:
-            int roundNum = (int) (num.floatValue() + 0.5f);
-            switch(roundNum) {
-                case 0:
-                    toAppendTo.append("Azimuth");
-                    break;
-                case 1:
-                    toAppendTo.append("Pitch");
-                    break;
-                case 2:
-                    toAppendTo.append("Roll");
-                    break;
-                default:
-                    toAppendTo.append("Unknown");
-            }
-            return toAppendTo;
-        }
-
-        @Override
-        public Object parseObject(String source, ParsePosition pos) {
-            return null;  // We don't use this so just return null for now.
-        }
-    }
-
-    private static final int HISTORY_SIZE = 300;            // number of points to plot in history
+    private static final int HISTORY_SIZE = 300;  // Number of points to plot in history.
     private SensorManager sensorMgr = null;
-    private Sensor orSensor = null;
+    private Sensor gyroSensor = null;
 
-//    private XYPlot aprLevelsPlot = null;
-    private XYPlot aprHistoryPlot = null;
+    private XYPlot mainPlot = null;
 
     private CheckBox hwAcceleratedCb;
     private CheckBox showFpsCb;
-    private SimpleXYSeries aprLevelsSeries = null;
-    private SimpleXYSeries azimuthHistorySeries = null;
-    private SimpleXYSeries pitchHistorySeries = null;
-    private SimpleXYSeries rollHistorySeries = null;
+    private SimpleXYSeries omegaXSeries = null;
+    private SimpleXYSeries omegaYSeries = null;
+    private SimpleXYSeries omegaZSeries = null;
 
-    /** Called when the activity is first created. */
+    // Called when the activity is first created.
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
         setContentView(R.layout.gyro_plot_layout);
 
-//        // setup the APR Levels plot:
-//        aprLevelsPlot = (XYPlot) findViewById(R.id.aprLevelsPlot);
-//
-//        aprLevelsSeries = new SimpleXYSeries("APR Levels");
-//        aprLevelsSeries.useImplicitXVals();
-//        aprLevelsPlot.addSeries(aprLevelsSeries,
-//                new BarFormatter(Color.argb(100, 0, 200, 0), Color.rgb(0, 80, 0)));
-//        aprLevelsPlot.setDomainStepValue(3);
-//        aprLevelsPlot.setTicksPerRangeLabel(3);
-//
-//        // per the android documentation, the minimum and maximum readings we can get from
-//        // any of the orientation sensors is -180 and 359 respectively so we will fix our plot's
-//        // boundaries to those values.  If we did not do this, the plot would auto-range which
-//        // can be visually confusing in the case of dynamic plots.
-//        aprLevelsPlot.setRangeBoundaries(-180, 359, BoundaryMode.FIXED);
-//
-//        // use our custom domain value formatter:
-//        aprLevelsPlot.setDomainValueFormat(new APRIndexFormat());
-//
-//        // update our domain and range axis labels:
-//        aprLevelsPlot.setDomainLabel("Axis");
-//        aprLevelsPlot.getDomainLabelWidget().pack();
-//        aprLevelsPlot.setRangeLabel("Angle (Degs)");
-//        aprLevelsPlot.getRangeLabelWidget().pack();
-//        aprLevelsPlot.setGridPadding(15, 0, 15, 0);
+        // Setup the angular velocity plot.
+        mainPlot = (XYPlot) findViewById(R.id.mainPlot);
 
-        // setup the APR History plot:
-        aprHistoryPlot = (XYPlot) findViewById(R.id.aprHistoryPlot);
+        omegaXSeries = new SimpleXYSeries("w_x");
+        omegaXSeries.useImplicitXVals();
+        omegaYSeries = new SimpleXYSeries("w_y");
+        omegaYSeries.useImplicitXVals();
+        omegaZSeries = new SimpleXYSeries("w_z");
+        omegaZSeries.useImplicitXVals();
 
-        azimuthHistorySeries = new SimpleXYSeries("w_x");
-        azimuthHistorySeries.useImplicitXVals();
-        pitchHistorySeries = new SimpleXYSeries("w_y");
-        pitchHistorySeries.useImplicitXVals();
-        rollHistorySeries = new SimpleXYSeries("w_z");
-        rollHistorySeries.useImplicitXVals();
+        mainPlot.setRangeBoundaries(-40, 40, BoundaryMode.FIXED);
+        mainPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
+        mainPlot.addSeries(omegaXSeries, new LineAndPointFormatter(Color.rgb(255, 100, 100), null, null, null));
+        mainPlot.addSeries(omegaYSeries, new LineAndPointFormatter(Color.rgb(100, 255, 100), null, null, null));
+        mainPlot.addSeries(omegaZSeries, new LineAndPointFormatter(Color.rgb(100, 100, 255), null, null, null));
 
-        aprHistoryPlot.setRangeBoundaries(-40, 40, BoundaryMode.FIXED);
-        aprHistoryPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
-        aprHistoryPlot.addSeries(azimuthHistorySeries, new LineAndPointFormatter(Color.rgb(200, 100, 100), null, null, null));
-        aprHistoryPlot.addSeries(pitchHistorySeries, new LineAndPointFormatter(Color.rgb(100, 200, 100), null, null, null));
-        aprHistoryPlot.addSeries(rollHistorySeries, new LineAndPointFormatter(Color.rgb(100, 100, 200), null, null, null));
-        aprHistoryPlot.setDomainStepValue(5);
-        aprHistoryPlot.setTicksPerRangeLabel(3);
-        aprHistoryPlot.setDomainLabel("Sample Index");
-        aprHistoryPlot.getDomainLabelWidget().pack();
-        aprHistoryPlot.setRangeLabel("Angular Velocity (rad/sec)");
-        aprHistoryPlot.getRangeLabelWidget().pack();
+        // Style the grid.
+        mainPlot.setDomainStep(XYStepMode.INCREMENT_BY_VAL, 50);
+        mainPlot.setRangeStep(XYStepMode.INCREMENT_BY_VAL, 10);
+        mainPlot.getGraphWidget().setMarginTop(10);
+        mainPlot.getGraphWidget().setMarginBottom(10);
+        mainPlot.getGraphWidget().setMarginRight(15);
+        //mainPlot.getGraphWidget().setGridPaddingTop(5);
+        //mainPlot.getGraphWidget().setGridPaddingRight(5);
+        mainPlot.getLegendWidget().setHeight(18);
 
-//        // setup checkboxes:
-//        hwAcceleratedCb = (CheckBox) findViewById(R.id.hwAccelerationCb);
-//        final PlotStatistics levelStats = new PlotStatistics(1000, false);
-//        final PlotStatistics histStats = new PlotStatistics(1000, false);
+        // Style the legend.
+        mainPlot.getLegendWidget().position(0, XLayoutStyle.ABSOLUTE_FROM_RIGHT,
+                                            0, YLayoutStyle.ABSOLUTE_FROM_TOP,
+                                            AnchorPosition.RIGHT_TOP);
+        mainPlot.getLegendWidget().setWidth(125, SizeLayoutType.ABSOLUTE);
 
-//        aprLevelsPlot.addListener(levelStats);
-//        aprHistoryPlot.addListener(histStats);
-//        hwAcceleratedCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//            @Override
-//            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-//                if(b) {
-//                    aprLevelsPlot.setLayerType(View.LAYER_TYPE_NONE, null);
-//                    aprHistoryPlot.setLayerType(View.LAYER_TYPE_NONE, null);
-//                } else {
-//                    aprLevelsPlot.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-//                    aprHistoryPlot.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-//                }
-//            }
-//        });
+        // Style the title.
+        mainPlot.setTitle("Angular Velocity in Body-Fixed Axes");
+        mainPlot.setPlotPaddingTop(10);
+        // Style the border.
+        //mainPlot.setBorderStyle(XYPlot.BorderStyle.ROUNDED, 10.0f, 10.0f);
+        //mainPlot.setBorderStyle(XYPlot.BorderStyle.NONE, null, null);
+        //mainPlot.getBackgroundPaint().setColor(Color.WHITE);
+        //mainPlot.setBackgroundColor(Color.WHITE);
 
-//        showFpsCb = (CheckBox) findViewById(R.id.showFpsCb);
-//        showFpsCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//            @Override
-//            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-//                levelStats.setAnnotatePlotEnabled(b);
-//                histStats.setAnnotatePlotEnabled(b);
-//            }
-//        });
+        // Set horizontal label.
+        mainPlot.setDomainLabel("Gyro Sample Index");
+        mainPlot.getDomainLabelWidget().position(0, XLayoutStyle.ABSOLUTE_FROM_CENTER,
+                                                 0, YLayoutStyle.ABSOLUTE_FROM_BOTTOM,
+                                                 AnchorPosition.BOTTOM_MIDDLE);
+        mainPlot.getDomainLabelWidget().pack();
 
-//        // get a ref to the BarRenderer so we can make some changes to it:
-//        BarRenderer barRenderer = (BarRenderer) aprLevelsPlot.getRenderer(BarRenderer.class);
-//        if(barRenderer != null) {
-//            // make our bars a little thicker than the default so they can be seen better:
-//            barRenderer.setBarWidth(25);
-//        }
+        // Set vertical label.
+        mainPlot.setRangeLabel("Angular Velocity (rad/sec)");
+        mainPlot.getRangeLabelWidget().pack();
 
-        // register for orientation sensor events:
+
+        //Paint plotBackground = new Paint();
+        //plotBackground.setARGB(255, 255, 255, 255);
+        //mainPlot.getGraphWidget().setBackgroundPaint(plotBackground);
+        //mainPlot.getGraphWidget().setSize(
+        // new SizeMetrics(100, SizeLayoutType.FILL, 100, SizeLayoutType.FILL));
+        //mainPlot.disableAllMarkup();
+
+        // Register for orientation sensor events.
         sensorMgr = (SensorManager) getApplicationContext().getSystemService(Context.SENSOR_SERVICE);
         for (Sensor sensor : sensorMgr.getSensorList(Sensor.TYPE_GYROSCOPE)) {
             if (sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-                orSensor = sensor;
-                Log.e(TAG, "Sensor range is: " + orSensor.getMaximumRange());
+                gyroSensor = sensor;
+                Log.i(TAG, "Sensor range is: " + gyroSensor.getMaximumRange());
             }
         }
 
-        // if we can't access the orientation sensor then exit:
-        if (orSensor == null) {
-            System.out.println("Failed to attach to orSensor.");
+        if (gyroSensor == null) {
+            // Bail if we can't access the gyroscope sensor.
+            Log.e(TAG, "Failed to attach to gyroSensor. Aborting...");
             cleanup();
         }
 
-        sensorMgr.registerListener(this, orSensor, SensorManager.SENSOR_DELAY_FASTEST);
-
+        sensorMgr.registerListener(this, gyroSensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     @Override
@@ -222,25 +165,19 @@ public class GyroPlotActivity extends Activity implements SensorEventListener
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle presses on the action bar items
+        // Handle presses on the action bar items.
         int id = item.getItemId();
         switch (id) {
-//            case R.id.action_search:
-//                Log.e(TAG, "Clicked on search!");
-//                return true;
-//            case R.id.action_settings:
-//                Log.e(TAG, "Clicked on settings!");
-//                return true;
             case R.id.action_record:
-                Log.e(TAG, "Clicked on record!");
-                onStartRecord();
+                Log.i(TAG, "Clicked on record!");
+                toggleRecord();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void onStartRecord() {
+    private void toggleRecord() {
         mIsRecording = !mIsRecording;
     }
 
@@ -251,30 +188,24 @@ public class GyroPlotActivity extends Activity implements SensorEventListener
         finish();
     }
 
-    // Called whenever a new orSensor reading is taken.
+    // Called whenever a new gyroSensor reading is taken.
     @Override
     public synchronized void onSensorChanged(SensorEvent sensorEvent) {
         if (mIsRecording) {
-
-            // update instantaneous data:
-//        Number[] series1Numbers = {sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]};
-//        aprLevelsSeries.setModel(Arrays.asList(series1Numbers), SimpleXYSeries.ArrayFormat.Y_VALS_ONLY);
-
-            // get rid the oldest sample in history:
-            if (rollHistorySeries.size() > HISTORY_SIZE) {
-                rollHistorySeries.removeFirst();
-                pitchHistorySeries.removeFirst();
-                azimuthHistorySeries.removeFirst();
+            // Get rid the oldest sample in history.
+            if (omegaZSeries.size() > HISTORY_SIZE) {
+                omegaXSeries.removeFirst();
+                omegaYSeries.removeFirst();
+                omegaZSeries.removeFirst();
             }
 
-            // add the latest history sample:
-            azimuthHistorySeries.addLast(null, -sensorEvent.values[1]);
-            pitchHistorySeries.addLast(null, sensorEvent.values[0]);
-            rollHistorySeries.addLast(null, sensorEvent.values[2]);
+            // Add the latest history sample.
+            omegaXSeries.addLast(null, -sensorEvent.values[1]);
+            omegaYSeries.addLast(null, sensorEvent.values[0]);
+            omegaZSeries.addLast(null, sensorEvent.values[2]);
 
-            // redraw the Plots:
-//        aprLevelsPlot.redraw();
-            aprHistoryPlot.redraw();
+            // Redraw the plot.
+            mainPlot.redraw();
         }
     }
 
