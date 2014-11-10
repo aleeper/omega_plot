@@ -87,9 +87,17 @@ public class GyroPlotActivity extends Activity implements SensorEventListener
 
         mainPlot.setRangeBoundaries(-40, 40, BoundaryMode.FIXED);
         mainPlot.setDomainBoundaries(0, HISTORY_SIZE, BoundaryMode.FIXED);
-        mainPlot.addSeries(omegaXSeries, new LineAndPointFormatter(Color.rgb(255, 100, 100), null, null, null));
-        mainPlot.addSeries(omegaYSeries, new LineAndPointFormatter(Color.rgb(100, 255, 100), null, null, null));
-        mainPlot.addSeries(omegaZSeries, new LineAndPointFormatter(Color.rgb(100, 100, 255), null, null, null));
+
+        LineAndPointFormatter seriesXFormat = new LineAndPointFormatter(Color.rgb(255, 50, 50), null, null, null);
+        seriesXFormat.getLinePaint().setStrokeWidth(2);
+        LineAndPointFormatter seriesYFormat = new LineAndPointFormatter(Color.rgb(50, 255, 50), null, null, null);
+        seriesYFormat.getLinePaint().setStrokeWidth(2);
+        LineAndPointFormatter seriesZFormat = new LineAndPointFormatter(Color.rgb(50, 50, 255), null, null, null);
+        seriesZFormat.getLinePaint().setStrokeWidth(2);
+
+        mainPlot.addSeries(omegaXSeries, seriesXFormat);
+        mainPlot.addSeries(omegaYSeries, seriesYFormat);
+        mainPlot.addSeries(omegaZSeries, seriesZFormat);
 
         // Style the grid.
         mainPlot.setDomainStep(XYStepMode.INCREMENT_BY_VAL, 50);
